@@ -22,8 +22,9 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
   late String currentPlayer;
   late String aiPlayer;
   late String winner;
-  int playerScore = 0;
-  int opponentScore = 0;
+  // Initialize these variables directly instead of using 'late'
+  int playerScore = 0; // Changed from late to direct initialization
+  int opponentScore = 0; // Changed from late to direct initialization
   bool gameOver = false;
   bool firstPlayerStartsNext = false; // Track who starts first
 
@@ -241,15 +242,17 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Text(
-                    gameOver 
-                        ? (winner != 'Draw' 
-                            ? (winner == widget.playerSymbol ? 'You Win!' : 'You Lose!') 
-                            : "It's a Draw!")
-                        : currentPlayer == widget.playerSymbol 
-                            ? 'Your Turn' 
-                            : widget.isAI 
-                                ? "AI is thinking..." 
-                                : "Opponent's Turn",
+                    gameOver
+                        ? (winner != 'Draw'
+                              ? (winner == widget.playerSymbol
+                                    ? 'You Win!'
+                                    : 'You Lose!')
+                              : "It's a Draw!")
+                        : currentPlayer == widget.playerSymbol
+                        ? 'Your Turn'
+                        : widget.isAI
+                        ? "AI is thinking..."
+                        : "Opponent's Turn",
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -278,7 +281,12 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                       ),
                       decoration: BoxDecoration(
                         // Replace this line
-                        color: Colors.white.withValues(red: 255, green: 255, blue: 255, alpha: 0.2),
+                        color: Colors.white.withValues(
+                          red: 255,
+                          green: 255,
+                          blue: 255,
+                          alpha: 0.2,
+                        ),
                         // Alternative method if withValues still has issues
                         // color: Colors.white.withOpacity(0.2), // This works but is deprecated
                         borderRadius: BorderRadius.circular(20),
@@ -382,11 +390,15 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 20),
                   child: Text(
-                    gameOver 
-                      ? (winner != 'Draw' 
-                        ? (winner == widget.playerSymbol ? 'You Win!' : 'You Lose!') 
-                        : "It's a Draw!")
-                      : (currentPlayer == widget.playerSymbol ? 'Your Turn' : "Opponent's Turn"),
+                    gameOver
+                        ? (winner != 'Draw'
+                              ? (winner == widget.playerSymbol
+                                    ? 'You Win!'
+                                    : 'You Lose!')
+                              : "It's a Draw!")
+                        : (currentPlayer == widget.playerSymbol
+                              ? 'Your Turn'
+                              : "Opponent's Turn"),
                     style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ),

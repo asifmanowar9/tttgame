@@ -1,10 +1,20 @@
 import 'package:flutter/material.dart';
-import 'screens/game_mode_screen.dart';
+import 'package:flutter/services.dart';
+import 'package:flame/flame.dart';
+import 'screens/main_menu_screen.dart';
 import 'theme/app_theme.dart';
 
-void main() {
-  // Ensure proper initialization
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Set preferred orientations
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
+  
+  // Initialize Flame
+  await Flame.device.fullScreen();
+  await Flame.device.setPortrait();
   
   runApp(const MyApp());
 }
@@ -15,10 +25,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Tic Tac Toe',
+      title: 'Flame Tic Tac Toe',
       theme: AppTheme.getTheme(),
       debugShowCheckedModeBanner: false,
-      home: const GameModeScreen(),
+      home: const MainMenuScreen(),
     );
   }
 }
