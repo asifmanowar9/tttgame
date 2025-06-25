@@ -3,12 +3,14 @@ class Game {
   String currentPlayer;
   String winner;
   bool gameOver;
+  bool firstPlayerStartsNext; // Track who starts next round
 
-  Game() 
+  Game()
     : board = List.generate(3, (_) => List.filled(3, '')),
       currentPlayer = 'X',
       winner = '',
-      gameOver = false;
+      gameOver = false,
+      firstPlayerStartsNext = false; // X starts first round, then alternates
 
   bool makeMove(int row, int col) {
     if (board[row][col] != '' || gameOver) {
@@ -16,21 +18,25 @@ class Game {
     }
 
     board[row][col] = currentPlayer;
-    
+
     // Check for winner
     if (checkWinner(currentPlayer)) {
       winner = currentPlayer;
       gameOver = true;
+      // After this game, the other player will start next time
+      firstPlayerStartsNext = !firstPlayerStartsNext;
       return true;
     }
-    
+
     // Check for draw
     if (isBoardFull()) {
       gameOver = true;
       winner = 'Draw';
+      // After a draw, also alternate who goes first
+      firstPlayerStartsNext = !firstPlayerStartsNext;
       return true;
     }
-    
+
     // Switch player
     currentPlayer = currentPlayer == 'X' ? 'O' : 'X';
     return true;
@@ -39,26 +45,34 @@ class Game {
   bool checkWinner(String player) {
     // Check rows
     for (int i = 0; i < 3; i++) {
-      if (board[i][0] == player && board[i][1] == player && board[i][2] == player) {
+      if (board[i][0] == player &&
+          board[i][1] == player &&
+          board[i][2] == player) {
         return true;
       }
     }
-    
+
     // Check columns
     for (int i = 0; i < 3; i++) {
-      if (board[0][i] == player && board[1][i] == player && board[2][i] == player) {
+      if (board[0][i] == player &&
+          board[1][i] == player &&
+          board[2][i] == player) {
         return true;
       }
     }
-    
+
     // Check diagonals
-    if (board[0][0] == player && board[1][1] == player && board[2][2] == player) {
+    if (board[0][0] == player &&
+        board[1][1] == player &&
+        board[2][2] == player) {
       return true;
     }
-    if (board[0][2] == player && board[1][1] == player && board[2][0] == player) {
+    if (board[0][2] == player &&
+        board[1][1] == player &&
+        board[2][0] == player) {
       return true;
     }
-    
+
     return false;
   }
 
@@ -75,7 +89,8 @@ class Game {
 
   void reset() {
     board = List.generate(3, (_) => List.filled(3, ''));
-    currentPlayer = 'X';
+    // Use firstPlayerStartsNext to determine who starts
+    currentPlayer = firstPlayerStartsNext ? 'O' : 'X';
     winner = '';
     gameOver = false;
   }

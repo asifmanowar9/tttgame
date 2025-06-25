@@ -22,9 +22,10 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
   late String currentPlayer;
   late String aiPlayer;
   late String winner;
-  late int playerScore;
-  late int opponentScore;
+  int playerScore = 0;
+  int opponentScore = 0;
   bool gameOver = false;
+  bool firstPlayerStartsNext = false; // Track who starts first
 
   @override
   void initState() {
@@ -35,16 +36,15 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
   void initializeGame() {
     // Initialize 3x3 board
     board = List.generate(3, (_) => List.filled(3, ''));
-    
-    currentPlayer = 'X'; // X always goes first
+
+    // Set current player based on who should go first this round
+    currentPlayer = firstPlayerStartsNext ? 'O' : 'X';
     aiPlayer = widget.playerSymbol == 'X' ? 'O' : 'X';
     winner = '';
-    playerScore = 0;
-    opponentScore = 0;
     gameOver = false;
-    
-    // If AI goes first, make a move
-    if (widget.isAI && aiPlayer == 'X') {
+
+    // If AI goes first in this round, make a move
+    if (widget.isAI && currentPlayer == aiPlayer) {
       makeAIMove();
     }
   }
@@ -56,12 +56,12 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
 
     setState(() {
       board[row][col] = currentPlayer;
-      
+
       // Check for winner
       if (checkWinner(currentPlayer)) {
         winner = currentPlayer;
         gameOver = true;
-        
+
         if (winner == widget.playerSymbol) {
           playerScore++;
         } else {
@@ -69,29 +69,29 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
         }
         return;
       }
-      
+
       // Check for draw
       if (isBoardFull()) {
         gameOver = true;
         winner = 'Draw';
         return;
       }
-      
+
       // Switch player
       currentPlayer = currentPlayer == 'X' ? 'O' : 'X';
-      
-      // AI's turn
-      if (widget.isAI && currentPlayer == aiPlayer && !gameOver) {
-        Future.delayed(const Duration(milliseconds: 500), () {
-          makeAIMove();
-        });
-      }
     });
+
+    // Move this outside setState
+    if (widget.isAI && currentPlayer == aiPlayer && !gameOver) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        makeAIMove();
+      });
+    }
   }
-  
+
   void makeAIMove() {
     if (gameOver) return;
-    
+
     // Simple AI: Look for winning move
     for (int i = 0; i < 3; i++) {
       for (int j = 0; j < 3; j++) {
@@ -109,7 +109,7 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
         }
       }
     }
-    
+
     // Block player's winning move
     for (int i = 0; i < 3; i++) {
       for (int j = 0; j < 3; j++) {
@@ -125,7 +125,7 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
         }
       }
     }
-    
+
     // Take center if available
     if (board[1][1] == '') {
       board[1][1] = aiPlayer;
@@ -133,7 +133,7 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
       currentPlayer = currentPlayer == 'X' ? 'O' : 'X';
       return;
     }
-    
+
     // Take a random available move
     List<List<int>> availableMoves = [];
     for (int i = 0; i < 3; i++) {
@@ -143,26 +143,26 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
         }
       }
     }
-    
+
     if (availableMoves.isNotEmpty) {
       final random = Random();
       final move = availableMoves[random.nextInt(availableMoves.length)];
       setState(() {
         board[move[0]][move[1]] = aiPlayer;
-        
+
         if (checkWinner(aiPlayer)) {
           winner = aiPlayer;
           gameOver = true;
           opponentScore++;
           return;
         }
-        
+
         if (isBoardFull()) {
           gameOver = true;
           winner = 'Draw';
           return;
         }
-        
+
         currentPlayer = currentPlayer == 'X' ? 'O' : 'X';
       });
     }
@@ -171,26 +171,34 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
   bool checkWinner(String player) {
     // Check rows
     for (int i = 0; i < 3; i++) {
-      if (board[i][0] == player && board[i][1] == player && board[i][2] == player) {
+      if (board[i][0] == player &&
+          board[i][1] == player &&
+          board[i][2] == player) {
         return true;
       }
     }
-    
+
     // Check columns
     for (int i = 0; i < 3; i++) {
-      if (board[0][i] == player && board[1][i] == player && board[2][i] == player) {
+      if (board[0][i] == player &&
+          board[1][i] == player &&
+          board[2][i] == player) {
         return true;
       }
     }
-    
+
     // Check diagonals
-    if (board[0][0] == player && board[1][1] == player && board[2][2] == player) {
+    if (board[0][0] == player &&
+        board[1][1] == player &&
+        board[2][2] == player) {
       return true;
     }
-    if (board[0][2] == player && board[1][1] == player && board[2][0] == player) {
+    if (board[0][2] == player &&
+        board[1][1] == player &&
+        board[2][0] == player) {
       return true;
     }
-    
+
     return false;
   }
 
@@ -207,6 +215,8 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
 
   void resetGame() {
     setState(() {
+      // Toggle who goes first for the next game
+      firstPlayerStartsNext = !firstPlayerStartsNext;
       initializeGame();
     });
   }
@@ -219,10 +229,7 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              AppTheme.gradientStart,
-              AppTheme.gradientEnd,
-            ],
+            colors: [AppTheme.gradientStart, AppTheme.gradientEnd],
           ),
         ),
         child: SafeArea(
@@ -230,6 +237,27 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Add this to your build method in GameBoardScreen before the score display
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Text(
+                    gameOver 
+                        ? (winner != 'Draw' 
+                            ? (winner == widget.playerSymbol ? 'You Win!' : 'You Lose!') 
+                            : "It's a Draw!")
+                        : currentPlayer == widget.playerSymbol 
+                            ? 'Your Turn' 
+                            : widget.isAI 
+                                ? "AI is thinking..." 
+                                : "Opponent's Turn",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+
                 // Score board
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -244,9 +272,15 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                     ),
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 16),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        // Replace this line
+                        color: Colors.white.withValues(red: 255, green: 255, blue: 255, alpha: 0.2),
+                        // Alternative method if withValues still has issues
+                        // color: Colors.white.withOpacity(0.2), // This works but is deprecated
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -268,9 +302,9 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 30),
-                
+
                 // Game board
                 Container(
                   width: 300,
@@ -281,19 +315,23 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                   ),
                   child: GridView.builder(
                     padding: const EdgeInsets.all(10),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 5,
-                      mainAxisSpacing: 5,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 5,
+                          mainAxisSpacing: 5,
+                        ),
                     itemCount: 9,
                     itemBuilder: (context, index) {
                       final row = index ~/ 3;
                       final col = index % 3;
-                      
+
                       return GestureDetector(
                         onTap: () {
-                          if (!gameOver && (widget.isAI ? currentPlayer == widget.playerSymbol : true)) {
+                          if (!gameOver &&
+                              (widget.isAI
+                                  ? currentPlayer == widget.playerSymbol
+                                  : true)) {
                             makeMove(row, col);
                           }
                         },
@@ -302,17 +340,15 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(5),
                           ),
-                          child: Center(
-                            child: _buildSymbol(board[row][col]),
-                          ),
+                          child: Center(child: _buildSymbol(board[row][col])),
                         ),
                       );
                     },
                   ),
                 ),
-                
+
                 const SizedBox(height: 30),
-                
+
                 // Game control buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -330,7 +366,9 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(builder: (context) => const GameModeScreen()),
+                            MaterialPageRoute(
+                              builder: (context) => const GameModeScreen(),
+                            ),
                             (route) => false,
                           );
                         },
@@ -339,32 +377,19 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                     ),
                   ],
                 ),
-                
-                if (gameOver && winner != 'Draw')
-                  Padding(
-                    padding: const EdgeInsets.only(top: 20),
-                    child: Text(
-                      winner == widget.playerSymbol ? 'You Win!' : 'You Lose!',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+
+                // Game status text
+                Padding(
+                  padding: const EdgeInsets.only(top: 20),
+                  child: Text(
+                    gameOver 
+                      ? (winner != 'Draw' 
+                        ? (winner == widget.playerSymbol ? 'You Win!' : 'You Lose!') 
+                        : "It's a Draw!")
+                      : (currentPlayer == widget.playerSymbol ? 'Your Turn' : "Opponent's Turn"),
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
-                
-                if (gameOver && winner == 'Draw')
-                  const Padding(
-                    padding: EdgeInsets.only(top: 20),
-                    child: Text(
-                      'It\'s a Draw!',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+                ),
               ],
             ),
           ),
