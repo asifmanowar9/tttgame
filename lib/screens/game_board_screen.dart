@@ -373,12 +373,8 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                       width: 120,
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                              builder: (context) => const GameModeScreen(),
-                            ),
-                            (route) => false,
-                          );
+                          // Use Navigator.pop instead of pushReplacement
+                          Navigator.of(context).pop();
                         },
                         child: const Text('End game'),
                       ),

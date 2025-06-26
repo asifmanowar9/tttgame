@@ -15,7 +15,10 @@ class SideSelectionScreen extends StatefulWidget {
 
 class _SideSelectionScreenState extends State<SideSelectionScreen>
     with SingleTickerProviderStateMixin {
-  String? _selectedSide;
+  // Use a ValueNotifier instead of a simple String variable
+  final ValueNotifier<String?> _selectedSideNotifier = ValueNotifier<String?>(
+    null,
+  );
   late AnimationController _animationController;
 
   @override
@@ -30,6 +33,8 @@ class _SideSelectionScreenState extends State<SideSelectionScreen>
   @override
   void dispose() {
     _animationController.dispose();
+    _selectedSideNotifier
+        .dispose(); // Don't forget to dispose the ValueNotifier
     super.dispose();
   }
 
@@ -54,22 +59,28 @@ class _SideSelectionScreenState extends State<SideSelectionScreen>
 
                   const SizedBox(height: 60),
 
-                  // Symbols selection row
+                  // Symbols selection row using ValueListenableBuilder
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // X selection
-                      _buildSymbolSelection(
+                      // X Symbol
+                      _buildSymbol(
                         isX: true,
-                        isSelected: _selectedSide == 'X',
+                        onSelect: () {
+                          _selectedSideNotifier.value = 'X';
+                          _animationController.forward();
+                        },
                       ),
 
                       const SizedBox(width: 40),
 
-                      // O selection
-                      _buildSymbolSelection(
+                      // O Symbol
+                      _buildSymbol(
                         isX: false,
-                        isSelected: _selectedSide == 'O',
+                        onSelect: () {
+                          _selectedSideNotifier.value = 'O';
+                          _animationController.forward();
+                        },
                       ),
                     ],
                   ),
@@ -77,14 +88,19 @@ class _SideSelectionScreenState extends State<SideSelectionScreen>
                   const SizedBox(height: 60),
 
                   // Start game button
-                  SizedBox(
-                    width: 220,
-                    child: ElevatedButton(
-                      onPressed: _selectedSide != null
-                          ? () => _startGame(context)
-                          : null,
-                      child: const Text('Start Game'),
-                    ),
+                  ValueListenableBuilder<String?>(
+                    valueListenable: _selectedSideNotifier,
+                    builder: (context, selectedSide, _) {
+                      return SizedBox(
+                        width: 220,
+                        child: ElevatedButton(
+                          onPressed: selectedSide != null
+                              ? () => _startGame(context, selectedSide)
+                              : null,
+                          child: const Text('Start Game'),
+                        ),
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 20),
@@ -107,64 +123,61 @@ class _SideSelectionScreenState extends State<SideSelectionScreen>
     );
   }
 
-  Widget _buildSymbolSelection({required bool isX, required bool isSelected}) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedSide = isX ? 'X' : 'O';
-        });
+  Widget _buildSymbol({required bool isX, required VoidCallback onSelect}) {
+    return ValueListenableBuilder<String?>(
+      valueListenable: _selectedSideNotifier,
+      builder: (context, selectedSide, _) {
+        final isSelected =
+            (isX && selectedSide == 'X') || (!isX && selectedSide == 'O');
 
-        // Play animation
-        if (isSelected) {
-          _animationController.reverse();
-        } else {
-          _animationController.forward();
-        }
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-        width: isSelected ? 100 : 80,
-        height: isSelected ? 100 : 80,
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.white.withAlpha(100),
-          borderRadius: BorderRadius.circular(isX ? 16 : 50),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(
-                      red: 0,
-                      green: 0,
-                      blue: 0,
-                      alpha: 51, // 0.2 * 255 = ~51
-                    ),
-                    blurRadius: 10,
-                    spreadRadius: 2,
-                    offset: const Offset(0, 5),
-                  ),
-                ]
-              : null,
-        ),
-        child: Center(
-          child: isX
-              ? _buildCross(
-                  size: isSelected ? 70 : 50,
-                  thickness: isSelected ? 15 : 10,
-                  color: AppTheme.primaryColor,
-                )
-              : Container(
-                  width: isSelected ? 70 : 50,
-                  height: isSelected ? 70 : 50,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
+        return GestureDetector(
+          onTap: onSelect,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+            width: isSelected ? 100 : 80,
+            height: isSelected ? 100 : 80,
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.white : Colors.white.withAlpha(100),
+              borderRadius: BorderRadius.circular(isX ? 16 : 50),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: Colors.white.withValues(
+                          red: 0,
+                          green: 0,
+                          blue: 0,
+                          alpha: 51,
+                        ),
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                        offset: const Offset(0, 5),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Center(
+              child: isX
+                  ? _buildCross(
+                      size: isSelected ? 70 : 50,
+                      thickness: isSelected ? 15 : 10,
                       color: AppTheme.primaryColor,
-                      width: isSelected ? 15 : 10,
+                    )
+                  : Container(
+                      width: isSelected ? 70 : 50,
+                      height: isSelected ? 70 : 50,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppTheme.primaryColor,
+                          width: isSelected ? 15 : 10,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-        ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -197,10 +210,7 @@ class _SideSelectionScreenState extends State<SideSelectionScreen>
     );
   }
 
-  void _startGame(BuildContext context) {
-    // Default to X if somehow nothing is selected
-    final playerSymbol = _selectedSide ?? 'X';
-
+  void _startGame(BuildContext context, String playerSymbol) {
     Navigator.push(
       context,
       PageRouteBuilder(

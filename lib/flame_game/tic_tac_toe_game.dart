@@ -80,9 +80,9 @@ class TicTacToeGame extends FlameGame {
     buttonsComponent = ButtonsComponent(
       onRestart: resetGame,
       onExit: () {
-        Navigator.of(context).pushAndRemoveUntil(
+        // Replace pushAndRemoveUntil with pushReplacement to preserve navigation stack
+        Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const GameModeScreen()),
-          (route) => false,
         );
       },
     );
@@ -170,112 +170,113 @@ class TicTacToeGame extends FlameGame {
   }
 
   void makeAIMove() {
-    if (gameOver) {
-      aiThinking = false;
-      return;
-    }
+    if (gameOver) return;
+    aiThinking = true;
 
-    // Simple AI: Look for winning move
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-        if (board[i][j] == '') {
-          board[i][j] = aiPlayer;
-          if (checkWinner(aiPlayer)) {
-            boardComponent.placeSymbol(i, j, aiPlayer);
-            winner = aiPlayer;
-            gameOver = true;
-            opponentScore++;
-            scoreComponent.updateScore(playerScore, opponentScore);
-            statusComponent.updateState(
-              currentPlayer: aiPlayer,
-              gameOver: gameOver,
-              winner: winner,
-            );
-            boardComponent.highlightWin(getWinningLine());
-            aiThinking = false;
-            return;
-          }
-          board[i][j] = '';
-        }
-      }
-    }
-
-    // Block player's winning move
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-        if (board[i][j] == '') {
-          board[i][j] = playerSymbol;
-          if (checkWinner(playerSymbol)) {
+    // Add a small delay to fix potential positioning issues
+    Future.delayed(const Duration(milliseconds: 200), () {
+      // Simple AI: Look for winning move
+      for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+          if (board[i][j] == '') {
             board[i][j] = aiPlayer;
-            boardComponent.placeSymbol(i, j, aiPlayer);
-            currentPlayer = currentPlayer == 'X' ? 'O' : 'X';
-            statusComponent.updateState(currentPlayer: currentPlayer);
-            aiThinking = false;
-            return;
+            if (checkWinner(aiPlayer)) {
+              boardComponent.placeSymbol(i, j, aiPlayer);
+              winner = aiPlayer;
+              gameOver = true;
+              opponentScore++;
+              scoreComponent.updateScore(playerScore, opponentScore);
+              statusComponent.updateState(
+                currentPlayer: aiPlayer,
+                gameOver: gameOver,
+                winner: winner,
+              );
+              boardComponent.highlightWin(getWinningLine());
+              aiThinking = false;
+              return;
+            }
+            board[i][j] = '';
           }
-          board[i][j] = '';
         }
       }
-    }
 
-    // Take center if available
-    if (board[1][1] == '') {
-      board[1][1] = aiPlayer;
-      boardComponent.placeSymbol(1, 1, aiPlayer);
-      currentPlayer = currentPlayer == 'X' ? 'O' : 'X';
-      statusComponent.updateState(currentPlayer: currentPlayer);
+      // Block player's winning move
+      for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+          if (board[i][j] == '') {
+            board[i][j] = playerSymbol;
+            if (checkWinner(playerSymbol)) {
+              board[i][j] = aiPlayer;
+              boardComponent.placeSymbol(i, j, aiPlayer);
+              currentPlayer = currentPlayer == 'X' ? 'O' : 'X';
+              statusComponent.updateState(currentPlayer: currentPlayer);
+              aiThinking = false;
+              return;
+            }
+            board[i][j] = '';
+          }
+        }
+      }
+
+      // Take center if available
+      if (board[1][1] == '') {
+        board[1][1] = aiPlayer;
+        boardComponent.placeSymbol(1, 1, aiPlayer);
+        currentPlayer = currentPlayer == 'X' ? 'O' : 'X';
+        statusComponent.updateState(currentPlayer: currentPlayer);
+        aiThinking = false;
+        return;
+      }
+
+      // Take a random available move
+      List<List<int>> availableMoves = [];
+      for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+          if (board[i][j] == '') {
+            availableMoves.add([i, j]);
+          }
+        }
+      }
+
+      if (availableMoves.isNotEmpty) {
+        final random = Random();
+        final move = availableMoves[random.nextInt(availableMoves.length)];
+        board[move[0]][move[1]] = aiPlayer;
+        boardComponent.placeSymbol(move[0], move[1], aiPlayer);
+
+        if (checkWinner(aiPlayer)) {
+          winner = aiPlayer;
+          gameOver = true;
+          opponentScore++;
+          scoreComponent.updateScore(playerScore, opponentScore);
+          statusComponent.updateState(
+            currentPlayer: aiPlayer,
+            gameOver: gameOver,
+            winner: winner,
+          );
+          boardComponent.highlightWin(getWinningLine());
+          aiThinking = false;
+          return;
+        }
+
+        if (isBoardFull()) {
+          gameOver = true;
+          winner = 'Draw';
+          statusComponent.updateState(
+            currentPlayer: currentPlayer,
+            gameOver: gameOver,
+            winner: winner,
+          );
+          aiThinking = false;
+          return;
+        }
+
+        currentPlayer = currentPlayer == 'X' ? 'O' : 'X';
+        statusComponent.updateState(currentPlayer: currentPlayer);
+      }
+
       aiThinking = false;
-      return;
-    }
-
-    // Take a random available move
-    List<List<int>> availableMoves = [];
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-        if (board[i][j] == '') {
-          availableMoves.add([i, j]);
-        }
-      }
-    }
-
-    if (availableMoves.isNotEmpty) {
-      final random = Random();
-      final move = availableMoves[random.nextInt(availableMoves.length)];
-      board[move[0]][move[1]] = aiPlayer;
-      boardComponent.placeSymbol(move[0], move[1], aiPlayer);
-
-      if (checkWinner(aiPlayer)) {
-        winner = aiPlayer;
-        gameOver = true;
-        opponentScore++;
-        scoreComponent.updateScore(playerScore, opponentScore);
-        statusComponent.updateState(
-          currentPlayer: aiPlayer,
-          gameOver: gameOver,
-          winner: winner,
-        );
-        boardComponent.highlightWin(getWinningLine());
-        aiThinking = false;
-        return;
-      }
-
-      if (isBoardFull()) {
-        gameOver = true;
-        winner = 'Draw';
-        statusComponent.updateState(
-          currentPlayer: currentPlayer,
-          gameOver: gameOver,
-          winner: winner,
-        );
-        aiThinking = false;
-        return;
-      }
-
-      currentPlayer = currentPlayer == 'X' ? 'O' : 'X';
-      statusComponent.updateState(currentPlayer: currentPlayer);
-    }
-
-    aiThinking = false;
+    });
   }
 
   bool checkWinner(String player) {
@@ -513,19 +514,20 @@ class BoardComponent extends PositionComponent with TapCallbacks {
       symbols[row][col]!.removeFromParent();
     }
 
-    // Calculate position for the symbol - center of the cell
+    // Calculate position for the symbol
     final symbolPosition = Vector2(
-      col * cellSize + cellSize / 2,
-      row * cellSize + cellSize / 2,
+      col * cellSize + cellSize / 2, // Center horizontally
+      row * cellSize +
+          cellSize / 2, // Center vertically - ensure this is correct
     );
 
-    // Create and add the new symbol with animation
+    // Create and add the new symbol
     final symbolComponent = SymbolComponent(
       symbol: symbol,
-      size: cellSize * 0.7, // Make symbols slightly larger
+      size: cellSize * 0.8,
     );
 
-    // Ensure proper positioning with anchor
+    // Important: Set the anchor to center BEFORE setting position
     symbolComponent.anchor = Anchor.center;
     symbolComponent.position = symbolPosition;
 
@@ -884,19 +886,29 @@ class ButtonsComponent extends PositionComponent
 
   @override
   Future<void> onLoad() async {
+    // Create more stylish Restart button
     restartButton = ButtonComponent(
       text: 'Restart',
       onPressed: onRestart,
-      width: 120,
-      height: 50, // Make buttons taller
+      width: 140,
+      height: 55,
+      color: Colors.white,
+      textColor: AppTheme.primaryColor,
+      borderRadius: 25,
+      shadowOffset: 4,
     );
     add(restartButton);
 
+    // Create more stylish Exit button
     exitButton = ButtonComponent(
       text: 'Exit',
       onPressed: onExit,
-      width: 120,
-      height: 50, // Make buttons taller
+      width: 140,
+      height: 55,
+      color: Colors.white,
+      textColor: AppTheme.primaryColor,
+      borderRadius: 25,
+      shadowOffset: 4,
     );
     add(exitButton);
   }
@@ -904,12 +916,14 @@ class ButtonsComponent extends PositionComponent
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
-    // Position at 85% of screen height for better placement and visibility
-    position = Vector2(size.x / 2, size.y * 0.85);
+    // Position buttons at 90% of screen height instead of 85%
+    // This moves them lower on the screen as shown in the screenshot
+    position = Vector2(size.x / 2, size.y * 0.9);
 
-    // Position the buttons with more space between them
-    restartButton.position = Vector2(-80, 0);
-    exitButton.position = Vector2(80, 0);
+    // Position buttons horizontally with appropriate spacing
+    // Increase spacing slightly to match the screenshot
+    restartButton.position = Vector2(-100, 0); // Left button
+    exitButton.position = Vector2(100, 0); // Right button
   }
 }
 
@@ -922,15 +936,21 @@ class ButtonComponent extends PositionComponent
   @override
   final double height;
   final Color color;
+  final Color textColor;
+  final double borderRadius;
+  final double shadowOffset;
   late final TextComponent textComponent;
   bool isPressed = false;
 
   ButtonComponent({
     required this.text,
     required this.onPressed,
-    this.width = 120,
-    this.height = 40,
+    this.width = 140,
+    this.height = 55,
     this.color = Colors.white,
+    this.textColor = AppTheme.primaryColor,
+    this.borderRadius = 25,
+    this.shadowOffset = 4,
   }) : super(anchor: Anchor.center);
 
   @override
@@ -941,8 +961,8 @@ class ButtonComponent extends PositionComponent
       text: text,
       textRenderer: TextPaint(
         style: TextStyle(
-          color: AppTheme.primaryColor,
-          fontSize: 16,
+          color: textColor,
+          fontSize: 18,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -956,18 +976,13 @@ class ButtonComponent extends PositionComponent
     // Draw shadow first
     if (!isPressed) {
       final shadowPaint = Paint()
-        ..color = Colors.white.withValues(
-          red: 255,
-          green: 255,
-          blue: 255,
-          alpha: 76,
-        )
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+        ..color = Colors.black.withValues(red: 0, green: 0, blue: 0, alpha: 40)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
 
       canvas.drawRRect(
         RRect.fromRectAndRadius(
-          Rect.fromLTWH(-width / 2, -height / 2 + 3, width, height),
-          const Radius.circular(20),
+          Rect.fromLTWH(-width / 2, -height / 2 + shadowOffset, width, height),
+          Radius.circular(borderRadius),
         ),
         shadowPaint,
       );
@@ -986,9 +1001,33 @@ class ButtonComponent extends PositionComponent
           width,
           height,
         ),
-        const Radius.circular(20),
+        Radius.circular(borderRadius),
       ),
       buttonPaint,
+    );
+
+    // Add a subtle border
+    final borderPaint = Paint()
+      ..color = AppTheme.primaryColor.withValues(
+        red: AppTheme.primaryColor.red.toDouble(),
+        green: AppTheme.primaryColor.green.toDouble(),
+        blue: AppTheme.primaryColor.blue.toDouble(),
+        alpha: 50,
+      )
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          -width / 2,
+          -height / 2 + (isPressed ? 2 : 0),
+          width,
+          height,
+        ),
+        Radius.circular(borderRadius),
+      ),
+      borderPaint,
     );
   }
 
