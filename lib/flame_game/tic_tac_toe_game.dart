@@ -153,6 +153,28 @@ class TicTacToeGame extends FlameGame {
         gameOver: gameOver,
         winner: winner,
       );
+
+      // Toggle who goes first for the next game (same as in resetGame)
+      firstPlayerStartsNext = !firstPlayerStartsNext;
+
+      // Add auto-reset on draw without updating score
+      Future.delayed(const Duration(milliseconds: 1200), () {
+        boardComponent.resetBoard();
+        initializeGame();
+        statusComponent.updateState(
+          currentPlayer: currentPlayer,
+          gameOver: false,
+          winner: '',
+        );
+
+        // If AI should start first in the new game, make AI move
+        if (isAI && currentPlayer == aiPlayer) {
+          aiThinking = true;
+          Future.delayed(const Duration(milliseconds: 500), () {
+            makeAIMove();
+          });
+        }
+      });
       return;
     }
 
@@ -267,6 +289,28 @@ class TicTacToeGame extends FlameGame {
             gameOver: gameOver,
             winner: winner,
           );
+
+          // Toggle who goes first for the next game (same as in resetGame)
+          firstPlayerStartsNext = !firstPlayerStartsNext;
+
+          // Add auto-reset on draw without updating score
+          Future.delayed(const Duration(milliseconds: 1200), () {
+            boardComponent.resetBoard();
+            initializeGame();
+            statusComponent.updateState(
+              currentPlayer: currentPlayer,
+              gameOver: false,
+              winner: '',
+            );
+
+            // If AI should start first in the new game, make AI move
+            if (isAI && currentPlayer == aiPlayer) {
+              aiThinking = true;
+              Future.delayed(const Duration(milliseconds: 500), () {
+                makeAIMove();
+              });
+            }
+          });
           aiThinking = false;
           return;
         }
@@ -315,6 +359,7 @@ class TicTacToeGame extends FlameGame {
 
   List<List<int>> getWinningLine() {
     for (int i = 0; i < 3; i++) {
+      // Fix missing bracket and correctly check rows
       if (board[i][0] != '' &&
           board[i][0] == board[i][1] &&
           board[i][1] == board[i][2]) {
@@ -324,9 +369,8 @@ class TicTacToeGame extends FlameGame {
           [i, 2],
         ];
       }
-    }
 
-    for (int i = 0; i < 3; i++) {
+      // Check columns
       if (board[0][i] != '' &&
           board[0][i] == board[1][i] &&
           board[1][i] == board[2][i]) {
@@ -338,6 +382,7 @@ class TicTacToeGame extends FlameGame {
       }
     }
 
+    // Rest of the method remains unchanged
     if (board[0][0] != '' &&
         board[0][0] == board[1][1] &&
         board[1][1] == board[2][2]) {
@@ -477,7 +522,7 @@ class BoardComponent extends PositionComponent with TapCallbacks {
     // Center the board horizontally and position it vertically
     position = Vector2(
       (size.x - this.size.x) / 2,
-      size.y * 0.4, // Position at 40% from top
+      size.y * 0.35, // Position at 40% from top
     );
   }
 
@@ -721,6 +766,7 @@ class ScoreComponent extends PositionComponent with HasGameReference {
   late TextComponent scoreText;
   late TextComponent playerLabel;
   late TextComponent opponentLabel;
+  late RectangleComponent scoreBackground;
 
   ScoreComponent({
     required this.playerScore,
@@ -730,15 +776,29 @@ class ScoreComponent extends PositionComponent with HasGameReference {
 
   @override
   Future<void> onLoad() async {
+    // Add a more visible background for the score
+    scoreBackground = RectangleComponent(
+      size: Vector2(300, 50), // Made it slightly larger
+      position: Vector2(-150, -25),
+      paint: Paint()
+        ..color = Colors.black.withOpacity(0.3), // More visible background
+      cornerRadius: 25,
+    );
+    add(scoreBackground);
+
     playerLabel = TextComponent(
       text: 'You',
       textRenderer: TextPaint(
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 18,
+          fontSize: 20, // Increased font size
           fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(offset: Offset(1, 1), blurRadius: 2, color: Colors.black54),
+          ],
         ),
       ),
+      anchor: Anchor.center,
     );
     add(playerLabel);
 
@@ -747,10 +807,14 @@ class ScoreComponent extends PositionComponent with HasGameReference {
       textRenderer: TextPaint(
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 24,
+          fontSize: 28, // Increased font size
           fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(offset: Offset(1, 1), blurRadius: 2, color: Colors.black54),
+          ],
         ),
       ),
+      anchor: Anchor.center,
     );
     add(scoreText);
 
@@ -759,10 +823,14 @@ class ScoreComponent extends PositionComponent with HasGameReference {
       textRenderer: TextPaint(
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 18,
+          fontSize: 20, // Increased font size
           fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(offset: Offset(1, 1), blurRadius: 2, color: Colors.black54),
+          ],
         ),
       ),
+      anchor: Anchor.center,
     );
     add(opponentLabel);
   }
@@ -770,19 +838,32 @@ class ScoreComponent extends PositionComponent with HasGameReference {
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
-    position = Vector2(size.x / 2, size.y * 0.2);
+    position = Vector2(size.x / 2, size.y * 0.15);
 
     // Position the components
     playerLabel.position = Vector2(-120, 0);
     scoreText.position = Vector2(0, 0);
-    scoreText.anchor = Anchor.center;
-    opponentLabel.position = Vector2(80, 0);
+    opponentLabel.position = Vector2(120, 0);
   }
 
   void updateScore(int player, int opponent) {
     playerScore = player;
     opponentScore = opponent;
     scoreText.text = '$playerScore - $opponentScore';
+
+    // Add a scale effect to the background instead of color effect
+    scoreBackground.add(
+      SequenceEffect([
+        ScaleEffect.to(
+          Vector2.all(1.1),
+          EffectController(duration: 0.3, curve: Curves.easeOut),
+        ),
+        ScaleEffect.to(
+          Vector2.all(1.0),
+          EffectController(duration: 0.3, curve: Curves.easeIn),
+        ),
+      ]),
+    );
 
     // Add pulsating animation to the score
     scoreText.add(
@@ -837,7 +918,7 @@ class StatusComponent extends TextComponent with HasGameReference {
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
-    position = Vector2(size.x / 2, size.y * 0.1);
+    position = Vector2(size.x / 2, size.y * 0.3);
   }
 
   void updateState({String? currentPlayer, bool? gameOver, String? winner}) {
@@ -856,7 +937,7 @@ class StatusComponent extends TextComponent with HasGameReference {
           ? 'Your Turn'
           : isAI
           ? "AI is thinking..."
-          : "Opponent's Turn";
+          : "Opponent's Turn ";
     }
 
     // Add animation when text changes
@@ -916,14 +997,13 @@ class ButtonsComponent extends PositionComponent
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
-    // Position buttons at 90% of screen height instead of 85%
-    // This moves them lower on the screen as shown in the screenshot
+    // Position buttons at 90% of screen height
     position = Vector2(size.x / 2, size.y * 0.9);
 
-    // Position buttons horizontally with appropriate spacing
-    // Increase spacing slightly to match the screenshot
-    restartButton.position = Vector2(-100, 0); // Left button
-    exitButton.position = Vector2(100, 0); // Right button
+    // Adjust button positions to be more centered and visible
+    // Reduce the spacing and move them slightly right
+    restartButton.position = Vector2(-25, 0); // Changed from -100 to -25
+    exitButton.position = Vector2(160, 0); // Changed from 100 to 160
   }
 }
 
@@ -1074,5 +1154,28 @@ class ButtonComponent extends PositionComponent
     isPressed = false;
     scale = Vector2.all(1.0);
     return true;
+  }
+}
+
+class RectangleComponent extends PositionComponent {
+  final Paint paint;
+  final double cornerRadius;
+
+  RectangleComponent({
+    required Vector2 position,
+    required Vector2 size,
+    required this.paint,
+    this.cornerRadius = 0,
+  }) : super(position: position, size: size);
+
+  @override
+  void render(Canvas canvas) {
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, 0, size.x, size.y),
+        Radius.circular(cornerRadius),
+      ),
+      paint,
+    );
   }
 }

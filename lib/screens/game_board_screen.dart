@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import '../theme/app_theme.dart';
-import 'game_mode_screen.dart';
 
 class GameBoardScreen extends StatefulWidget {
   final bool isAI;
