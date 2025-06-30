@@ -881,12 +881,14 @@ class ScoreComponent extends PositionComponent with HasGameReference {
   }
 }
 
-class StatusComponent extends TextComponent with HasGameReference {
+class StatusComponent extends PositionComponent with HasGameReference {
   String currentPlayer;
   final String playerSymbol;
   final bool isAI;
   bool gameOver;
   String winner;
+  late TextComponent statusText;
+  SymbolComponent? turnSymbol; // Remove 'late' keyword
 
   StatusComponent({
     required this.currentPlayer,
@@ -894,20 +896,24 @@ class StatusComponent extends TextComponent with HasGameReference {
     required this.isAI,
     required this.gameOver,
     required this.winner,
-  }) : super(
-         text: '',
-         textRenderer: TextPaint(
-           style: const TextStyle(
-             color: Colors.white,
-             fontSize: 18,
-             fontWeight: FontWeight.bold,
-           ),
-         ),
-         anchor: Anchor.center,
-       );
+  });
 
   @override
   Future<void> onLoad() async {
+    statusText = TextComponent(
+      text: '',
+      textRenderer: TextPaint(
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      anchor: Anchor.centerLeft,
+      position: Vector2(-50, 0), // Offset to make room for symbol
+    );
+    add(statusText);
+
     updateState(
       currentPlayer: currentPlayer,
       gameOver: gameOver,
@@ -926,22 +932,36 @@ class StatusComponent extends TextComponent with HasGameReference {
     this.gameOver = gameOver ?? this.gameOver;
     this.winner = winner ?? this.winner;
 
+    // Remove existing turn symbol if any
+    if (turnSymbol != null) {
+      turnSymbol!.removeFromParent();
+      turnSymbol = null;
+    }
+
     if (this.gameOver) {
       if (this.winner != 'Draw') {
-        text = this.winner == playerSymbol ? 'You Win!' : 'You Lose!';
+        statusText.text = this.winner == playerSymbol
+            ? 'You Win!'
+            : 'You Lose!';
       } else {
-        text = "It's a Draw!";
+        statusText.text = "It's a Draw!";
       }
     } else {
-      text = this.currentPlayer == playerSymbol
+      statusText.text = this.currentPlayer == playerSymbol
           ? 'Your Turn'
           : isAI
           ? "AI is thinking..."
-          : "Opponent's Turn ";
+          : "Opponent's Turn";
+
+      // Add turn symbol next to text
+      turnSymbol = SymbolComponent(symbol: this.currentPlayer, size: 20);
+      turnSymbol!.position = Vector2(statusText.size.x + 10, 0);
+      turnSymbol!.anchor = Anchor.centerLeft;
+      add(turnSymbol!);
     }
 
     // Add animation when text changes
-    add(
+    statusText.add(
       SequenceEffect([
         ScaleEffect.to(
           Vector2.all(1.2),

@@ -240,23 +240,36 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                 // Add this to your build method in GameBoardScreen before the score display
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
-                  child: Text(
-                    gameOver
-                        ? (winner != 'Draw'
-                              ? (winner == widget.playerSymbol
-                                    ? 'You Win!'
-                                    : 'You Lose!')
-                              : "It's a Draw!")
-                        : currentPlayer == widget.playerSymbol
-                        ? 'Your Turn'
-                        : widget.isAI
-                        ? "AI is thinking..."
-                        : "Opponent's Turn",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        gameOver
+                            ? (winner != 'Draw'
+                                  ? (winner == widget.playerSymbol
+                                        ? 'You Win!'
+                                        : 'You Lose!')
+                                  : "It's a Draw!")
+                            : currentPlayer == widget.playerSymbol
+                            ? 'Your Turn'
+                            : widget.isAI
+                            ? "AI is thinking..."
+                            : "Opponent's Turn",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (!gameOver) ...[
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: _buildTurnSymbol(currentPlayer),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
 
@@ -384,17 +397,41 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                 // Game status text
                 Padding(
                   padding: const EdgeInsets.only(top: 20),
-                  child: Text(
-                    gameOver
-                        ? (winner != 'Draw'
-                              ? (winner == widget.playerSymbol
-                                    ? 'You Win!'
-                                    : 'You Lose!')
-                              : "It's a Draw!")
-                        : (currentPlayer == widget.playerSymbol
-                              ? 'Your Turn'
-                              : "Opponent's Turn"),
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        gameOver
+                            ? (winner != 'Draw'
+                                  ? (winner == widget.playerSymbol
+                                        ? 'You Win!'
+                                        : 'You Lose!')
+                                  : "It's a Draw!")
+                            : (currentPlayer == widget.playerSymbol
+                                  ? 'Your Turn'
+                                  : "Opponent's Turn"),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
+                      if (!gameOver) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(
+                              red: 255,
+                              green: 255,
+                              blue: 255,
+                              alpha: 0.2,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: _buildMiniSymbol(currentPlayer),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],
@@ -403,6 +440,43 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildMiniSymbol(String symbol) {
+    if (symbol == 'O') {
+      return Container(
+        width: 20,
+        height: 20,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 3),
+        ),
+      );
+    } else if (symbol == 'X') {
+      return SizedBox(
+        width: 20,
+        height: 20,
+        child: Stack(
+          children: [
+            Positioned(
+              top: 8,
+              child: Transform.rotate(
+                angle: 45 * 3.14159 / 180,
+                child: Container(width: 20, height: 3, color: Colors.white),
+              ),
+            ),
+            Positioned(
+              top: 8,
+              child: Transform.rotate(
+                angle: -45 * 3.14159 / 180,
+                child: Container(width: 20, height: 3, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return Container();
   }
 
   Widget _buildSymbol(String symbol) {
@@ -441,6 +515,43 @@ class _GameBoardScreenState extends State<GameBoardScreen> {
                   height: 8,
                   color: AppTheme.primaryColor,
                 ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return Container();
+  }
+
+  Widget _buildTurnSymbol(String symbol) {
+    if (symbol == 'O') {
+      return Container(
+        width: 20,
+        height: 20,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 3),
+        ),
+      );
+    } else if (symbol == 'X') {
+      return SizedBox(
+        width: 20,
+        height: 20,
+        child: Stack(
+          children: [
+            Positioned(
+              top: 8,
+              child: Transform.rotate(
+                angle: 45 * 3.14159 / 180,
+                child: Container(width: 20, height: 3, color: Colors.white),
+              ),
+            ),
+            Positioned(
+              top: 8,
+              child: Transform.rotate(
+                angle: -45 * 3.14159 / 180,
+                child: Container(width: 20, height: 3, color: Colors.white),
               ),
             ),
           ],
