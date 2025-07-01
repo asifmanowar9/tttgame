@@ -32,7 +32,7 @@ class GameModeScreen extends StatelessWidget {
                   _buildModeButton(
                     context: context,
                     icon: Icons.computer,
-                    label: 'Play vs AI',
+                    label: 'Play with AI',
                     isAI: true,
                   ),
 
@@ -42,7 +42,7 @@ class GameModeScreen extends StatelessWidget {
                   _buildModeButton(
                     context: context,
                     icon: Icons.people,
-                    label: 'Play vs Friend',
+                    label: 'Play with Friend',
                     isAI: false,
                   ),
 

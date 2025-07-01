@@ -290,7 +290,7 @@ class TicTacToeGame extends FlameGame {
             winner: winner,
           );
 
-          // Toggle who goes first for the next game (same as in resetGame)
+          // Toggle who goes first for the next game
           firstPlayerStartsNext = !firstPlayerStartsNext;
 
           // Add auto-reset on draw without updating score
@@ -303,7 +303,7 @@ class TicTacToeGame extends FlameGame {
               winner: '',
             );
 
-            // If AI should start first in the new game, make AI move
+            // Fix: Check if AI should start first in the new game after initialization
             if (isAI && currentPlayer == aiPlayer) {
               aiThinking = true;
               Future.delayed(const Duration(milliseconds: 500), () {
