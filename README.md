@@ -5,15 +5,15 @@ A beautiful Flutter-based Tic-Tac-Toe game with stunning particle effects and mu
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="screenshots/start_page.png" width="250" alt="Start Page">
-  <img src="screenshots/game_mode_screen.png" width="250" alt="Game Mode Selection">
-  <img src="screenshots/side_selection_screen.png" width="250" alt="Side Selection">
-  <img src="screenshots/gameplay.png" width="250" alt="Gameplay">
+  <img src="screenshots/start_page.webp" width="200" alt="Start Page">
+  <img src="screenshots/game_mode_screen.webp" width="200" alt="Game Mode Selection">
+  <img src="screenshots/side_selection_screen.webp" width="200" alt="Side Selection">
+  <img src="screenshots/gameplay.webp" width="200" alt="Gameplay">
 </p>
 
 <p align="center">
-  <img src="screenshots/ai_game.png" width="300" alt="AI Mode">
-  <img src="screenshots/friend_game.png" width="300" alt="Friend Mode">
+  <img src="screenshots/ai_game.webp" width="200" alt="AI Mode">
+  <img src="screenshots/friend_game.webp" width="200" alt="Friend Mode">
 </p>
 
 ## ✨ Features
